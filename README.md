@@ -8,6 +8,7 @@ Project name : wemos_PMS7003
 
 The aim of this project is to use PMS7003 sensor without 3rd party library and allow delay in loop. It also shows how to communicate with sensor via software serial.
 
+![Serial monitor](wemos_PMS7003/img/serial_monitor.png)
  - Features : 
    1. Run without 3rd party library
    2. Allow delay function
