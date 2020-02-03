@@ -1,24 +1,91 @@
+/**
+ * Air quality monitoring system using PMS7003 sensor with WIFI
+ *           
+ * Hardware : Wemos D1 mini, PMS7003
+ * Software : Arduino IDE
+ * 
+ * January 2020. Brian Kim
+ */
 #include <SoftwareSerial.h>
+#include <ESP8266WiFi.h>
+
+/**
+ * WiFi credentials
+ */
+#define WIFI_SSID "your-ssid"
+#define WIFI_PASS "your-password"
+
+/**
+ * Thingspeak credentials
+ */
+#define TS_URL    "api.thingspeak.com"
+#define TS_KEY    "your-ts-channel-key"
 
 /**
  * PMS7003 sensor pin map and packet header
  */
-#define PMS7003_TX D5 // GPIO14
-#define PMS7003_RX D6 // GPIO12
-#define PMS7003_PREAMBLE_1 0x42
-#define PMS7003_PREAMBLE_2 0x4D
+#define PMS7003_TX          D5   // GPIO12
+#define PMS7003_RX          D6   // GPIO14
+#define PMS7003_PREAMBLE_1  0x42 // From PMS7003 datasheet
+#define PMS7003_PREAMBLE_2  0x4D
 #define PMS7003_DATA_LENGTH 31
 
-/**
- * thingspeak credentials
+/**  
+ *   Wemos serial RX - TX PMS7003
+ *                TX - RX
  */
-#define TS_URL
-#define TS_CHANNEL
-#define TS_KEY
-
-SoftwareSerial _serial(PMS7003_RX, PMS7003_TX); // RX, TX
+SoftwareSerial _serial(PMS7003_TX, PMS7003_RX); // RX, TX
 
 int _pm1, _pm25, _pm10;
+
+void connectWifi() {
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(WIFI_SSID, WIFI_PASS);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());  
+}
+
+void uploadCloud(int pm1, int pm25, int pm10) {
+  WiFiClient client;
+  char datetime_str[25];
+  // Format : https://api.thingspeak.com/update.json?api_key=<write_api_key>&field1=123
+  String getStr = "GET /update.json?api_key=" + String(TS_KEY) 
+                + "&field1=" + String(pm1)
+                + "&field2=" + String(pm25)
+                + "&field3=" + String(pm10) 
+                + " HTTP/1.0";
+  Serial.println( getStr );
+
+  if (client.connect(TS_URL, 80)) {
+    client.println( getStr );
+    client.println();
+  } else {
+    Serial.println ("ERROR Connection failed"); 
+  }
+  // Wait for response from thingspeak
+  unsigned long timeout = millis();
+  while (client.available() == 0) {
+    if (millis() - timeout > 5000) {
+      Serial.println("ERROR Client timeout");
+      client.stop();
+      delay(60000);
+      return;
+    }
+  }
+
+  Serial.println("Response from thingspeak :");
+  while (client.available()) {
+    char ch = static_cast<char>(client.read());
+    Serial.print(ch);
+  }
+}
 
 void readSensor() {
   int checksum = 0;
@@ -37,11 +104,9 @@ void readSensor() {
     checksum += pms[0];
     for(int j=1; j<32 ; j++){
       pms[j] = _serial.read();
-      // Serial.print(pms[j],HEX);Serial.print(" ");
       if(j < 30)
         checksum += pms[j];
     }
-    // Serial.println(" ");
     _serial.flush();
     if( pms[30] != (unsigned char)(checksum>>8) 
       || pms[31]!= (unsigned char)(checksum) ){
@@ -58,48 +123,18 @@ void readSensor() {
   }		
 }
 
-void sendToCloud() {
-  char datetimeStr[25];
-  String postStr = "write_api_key=" + TS_KEY +"&time_format=absolute&updates=";
-  sprintf(datetimeStr,"%4d-%02d-%02dT%02d:%02d:%02d",year(),month(),day(),hour(),minute(),second());
-  // 2018-06-14T12:12:22-0500
-  postStr += String(datetimeStr)+"+0800" 
-              + "," + String(_pm1)
-              + "," + String(_pm25)
-              + "," + String(_pm10);
-
-  if ( !client ) { return false; }
-
-  if (client->connect( _cloudUrl , 80 )) {
-    client->println( "POST /channels/"+_cloudChannel+"/bulk_update.csv HTTP/1.1" );
-    client->println( "Host: api.thingspeak.com" );
-    client->println( "Connection: close" );
-    client->println( "Content-Type: application/x-www-form-urlencoded" );
-    client->println( "Content-Length: " + String( postStr.length() ) );
-    client->println();
-    client->println( postStr );
-    VERBOSELN( postStr );
-    String answer=getResponse();
-    if ( !answer.indexOf("202 Accepted") ) {
-      VERBOSELN("NM : sync : ERROR POST failed");
-    } else {
-      VERBOSELN("NM : sync : OK");
-    }
-  } else {
-    VERBOSELN ( "NM : sync : ERROR Connection failed" );  
-    return false;
-  }
-}
-
 void setup()
 {
   Serial.begin(115200); // For debugging
   _serial.begin(9600);  // For communicating with PMS7003 sensor
+  Serial.printf("\nAir quality monitoring system using PMS7003 sensor with WIFI\n");
+  connectWifi();        // Connect to WiFi
 }
 
 void loop()
 {
   readSensor();
-  Serial.printf("PM1.0 %d, PM2.5 %d PM10.0 %d", _pm1, _pm25, _pm10);
-  delay(2000);
+  Serial.printf("PM1.0:%d PM2.5:%d PM10.0:%d\n", _pm1, _pm25, _pm10);
+  uploadCloud(_pm1, _pm25, _pm10); // Upload to thingspeak cloud
+  delay(300000); // Wait 5 minutes
 }
