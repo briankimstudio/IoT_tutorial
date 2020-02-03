@@ -70,11 +70,12 @@ void setup()
 {
   Serial.begin(115200); // For debugging
   _serial.begin(9600);  // For communicating with PMS7003 sensor
+  Serial.printf("\nAir quality monitoring system using PMS7003 sensor\n");
 }
 
 void loop()
 {
   readSensor();
-  Serial.printf("PM1.0 %d, PM2.5 %d PM10.0 %d\n", _pm1, _pm25, _pm10);
+  Serial.printf("PM1.0:%d PM2.5:%d PM10.0:%d\n", _pm1, _pm25, _pm10);
   delay(2000);
 }
