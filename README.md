@@ -8,13 +8,15 @@ Project name : wemos_PMS7003
 
 The aim of this project is to use PMS7003 sensor without 3rd party library and allow delay in loop. It also shows how to communicate with sensor via software serial.
 
-![Serial monitor](wemos_PMS7003/img/serial_monitor.png)
+![wemos_PMS7003](wemos_PMS7003/img/wemos_PMS7003.jpg)
+
  - Features : 
    1. Run without 3rd party library
    2. Allow delay function
  - Hardware : Wemos D1 mini, PMS7003
  - Software : Arduino IDE
 
+![Serial monitor](wemos_PMS7003/img/serial_monitor.png)
 
 **Air quality monitor with WIFI**
 
