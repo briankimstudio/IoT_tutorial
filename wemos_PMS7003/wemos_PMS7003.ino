@@ -1,6 +1,9 @@
 /**
  * Air quality monitoring system using PMS7003 sensor
- *
+ * 
+ * Features: 1 Run without 3rd party library
+ *           2 Allow delay function
+ *           
  * Hardware : Wemos D1 mini, PMS7003
  * Software : Arduino IDE
  * 
@@ -11,13 +14,17 @@
 /**
  * PMS7003 sensor pin map and packet header
  */
-#define PMS7003_TX          D5   // GPIO14
-#define PMS7003_RX          D6   // GPIO12
+#define PMS7003_TX          D5   // GPIO12
+#define PMS7003_RX          D6   // GPIO14
 #define PMS7003_PREAMBLE_1  0x42 // From PMS7003 datasheet
 #define PMS7003_PREAMBLE_2  0x4D
 #define PMS7003_DATA_LENGTH 31
 
-SoftwareSerial _serial(PMS7003_RX, PMS7003_TX); // RX, TX
+/**  
+ *   Wemos serial RX - TX PMS7003
+ *                TX - RX
+ */
+SoftwareSerial _serial(PMS7003_TX, PMS7003_RX); // RX, TX
 
 int _pm1, _pm25, _pm10;
 
@@ -38,7 +45,7 @@ void readSensor() {
     checksum += pms[0];
     for(int j=1; j<32 ; j++){
       pms[j] = _serial.read();
-      // Serial.print(pms[j],HEX);Serial.print(" ");
+//       Serial.print(pms[j],HEX);Serial.print(" ");
       if(j < 30)
         checksum += pms[j];
     }
@@ -68,6 +75,6 @@ void setup()
 void loop()
 {
   readSensor();
-  Serial.printf("PM1.0 %d, PM2.5 %d PM10.0 %d", _pm1, _pm25, _pm10);
+  Serial.printf("PM1.0 %d, PM2.5 %d PM10.0 %d\n", _pm1, _pm25, _pm10);
   delay(2000);
 }
