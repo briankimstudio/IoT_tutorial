@@ -1,0 +1,20 @@
+/* Air quality monitoring system using PMS7003 sensor with WIFI, WEBSERVER
+Hardware : Wemos D1 mini, PMS7003
+Software : Arduino IDE, EPS8266 Sketch Data Upload
+Library  : ESPAsyncTCP, ESPAsyncWebServer */
+html {
+  font-family: monospace;
+}
+h1 {
+  font-size:45px;
+}
+body {
+  text-align: center;  
+}
+div {
+  display: table;
+  margin: 0 auto;
+}
+#clock_div {
+  font-size:27px;
+}
