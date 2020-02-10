@@ -1,0 +1,110 @@
+<!-- Air quality monitoring system using MH_Z19B sensor with WIFI, WEBSERVER
+Hardware : Wemos D1 mini, MH_Z19B
+Software : Arduino IDE, EPS8266 Sketch Data Upload
+Library  : ESPAsyncTCP, ESPAsyncWebServer -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Air quality monitor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <script>
+    google.charts.load('current', {'packages':['gauge','corechart']});
+    // Display clock above air quality gauge
+    function startClock() {
+      var now    = new Date();
+      var hour   = now.getHours();
+      var minute = now.getMinutes();
+      var second = now.getSeconds();
+      minute = minute < 10 ? "0" + minute : minute;
+      second = second < 10 ? "0" + second : second;
+      document.getElementById("clock_div").innerHTML =
+      hour + ":" + minute + ":" + second;
+      var tmp = setTimeout(startClock, 500);
+    }
+  </script>
+</head>
+  <body onload="startClock()">
+    <h1>CO2 air quality monitor</h1>
+    <div id="clock_div"></div>
+    <div id="status_div">Status:</div>
+    <div class="gauge" id="chart_div"></div>
+    <div id="line_chart_div"></div>
+    <script>
+      google.charts.setOnLoadCallback(drawChart);
+
+      function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+          ['Label', 'Value'],
+          ['CO2', 0]
+        ]);
+        
+        var options = {
+          redFrom: 2000, redTo: 5000,
+          yellowFrom:1000, yellowTo: 1999,
+          greenFrom:0, greenTo: 999,
+          max: 5000,
+          minorTicks: 10,
+          majorTicks: ["0","1000","2000","3000","4000","5000"]
+        };
+        
+        var chart = new google.visualization.Gauge(document.getElementById('chart_div'));
+        chart.draw(data, options);
+     
+
+        var data2 = google.visualization.arrayToDataTable([
+          ['Time', 'CO2'],
+          ['0',  0]]);
+
+        var options2 = {
+          title: 'CO2 density',
+          hAxis: {textPosition: 'none'},
+          vAxis: {title:'PPM', viewWindow: {min:0,max:3000}},
+          legend: { position: 'bottom' }  
+        };
+
+        var chart2 = new google.visualization.LineChart(document.getElementById('line_chart_div'));
+        chart2.draw(data2, options2);
+        var n=1;
+
+        setInterval(function ( ) {
+          var xhttp = new XMLHttpRequest();
+          xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+              var pms = this.responseText.split(" ");
+              console.log(pms);
+              if ( this.responseText == 0 ) {
+                document.getElementById('status_div').innerHTML = "Status: Starting";
+              } else if ( this.responseText <= 430 ) {
+                document.getElementById('status_div').innerHTML = "Status: Preheating";
+              } else {
+                document.getElementById('status_div').innerHTML = "Status: Measuring";
+              }
+            
+              data.setValue(0, 1, this.responseText);
+              chart.draw(data, options);
+
+              // options2 = {
+              //   title: 'CO2 density',
+              //   hAxis: {textPosition: 'none'},
+              //   vAxis: {title:'CO2 density in PPM', viewWindow: {min:0,max:3000}},
+              //   legend: { position: 'bottom' }  
+              // };
+              data2.addRow([n.toString(), parseInt(this.responseText)]);
+              chart2.draw(data2, options2);
+              n++;
+            }
+          };
+          xhttp.timeout = 2000;
+          xhttp.ontimeout = function() {
+            document.getElementById('status_div').innerHTML = "Status: Disconnected";
+          }
+          xhttp.open("GET", "/updatesensorreading", true);
+          xhttp.send();
+        }, 3000 );
+      }
+    </script>
+  </body>
+</html>

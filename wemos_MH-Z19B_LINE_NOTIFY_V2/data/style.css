@@ -1,0 +1,27 @@
+/* Air quality monitoring system using MH_Z19B sensor with WIFI, WEBSERVER
+Hardware : Wemos D1 mini, MH_Z19B
+Software : Arduino IDE, EPS8266 Sketch Data Upload
+Library  : ESPAsyncTCP, ESPAsyncWebServer */
+html {
+  font-family: monospace;
+}
+h1 {
+  font-size:45px;
+}
+body {
+  text-align: center;
+  background-image: url("line_logo.png");
+  background-repeat: no-repeat;
+}
+div {
+  align-content: center;
+  margin: 0 auto;
+}
+.gauge {
+  display: grid;
+  margin: 0 auto;
+}
+
+#clock_div {
+  font-size:27px;
+}
