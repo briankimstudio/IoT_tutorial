@@ -1,0 +1,26 @@
+<!-- Air quality monitoring system using MH_Z19B sensor with WIFI, WEBSERVER
+Hardware : Wemos D1 mini, MH_Z19B
+Software : Arduino IDE, EPS8266 Sketch Data Upload
+Library  : ESPAsyncTCP, ESPAsyncWebServer -->
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Air quality monitor</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="mobile-web-app-capable" content="yes">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <script src="script.js"></script>
+</head>
+  <body onload="startClock()">
+    <h1>CO2 Sensor</h1>
+    <div id="clock_div"></div>
+    <div>
+      <div id="status_div">Status:</div>
+      <progress id="progress" value=0 max=100></progress>
+    </div>
+    
+    <div class="gauge" id="chart_div"></div>
+    <div id="line_chart_div"></div>
+  </body>
+</html>
